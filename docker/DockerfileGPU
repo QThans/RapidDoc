@@ -52,6 +52,8 @@ ENV STARTUP_WAIT_TIME=15
 ENV LOG_LEVEL=INFO
 ENV MINERU_DEVICE_MODE=cuda:0
 ENV RAPID_MODELS_DIR=/app/models
+# Gotenberg URL (可选，用于 Office/URL 转 PDF，留空则禁用)
+# ENV GOTENBERG_URL=
 # 下载默认模型文件实现离线部署
 RUN python3 download_models.py
 

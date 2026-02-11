@@ -15,6 +15,11 @@ export LOG_LEVEL=${LOG_LEVEL:-INFO}
 
 echo "API Port: $API_PORT"
 echo "Log Level: $LOG_LEVEL"
+if [ -n "${GOTENBERG_URL:-}" ]; then
+    echo "Gotenberg URL: $GOTENBERG_URL"
+else
+    echo "Gotenberg: disabled (GOTENBERG_URL not set)"
+fi
 echo "======================================"
 
 # 启动主应用
