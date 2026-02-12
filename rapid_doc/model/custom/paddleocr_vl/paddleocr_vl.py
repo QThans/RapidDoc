@@ -38,9 +38,12 @@ class VLModelPool:
                             "PADDLEOCRVL_VL_VL_REC_SERVER_URL not set — "
                             "VL backend server url is required."
                         )
+                    api_key = os.getenv('PADDLEOCRVL_API_KEY')
+                    client_kwargs = {"api_key": api_key} if api_key else None
                     genai_config = GenAIConfig(
                         backend=backend,
-                        server_url=server_url
+                        server_url=server_url,
+                        client_kwargs=client_kwargs
                     )
 
                     if not paddleocrvl_version:
