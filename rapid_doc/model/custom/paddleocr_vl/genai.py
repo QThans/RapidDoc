@@ -489,8 +489,9 @@ class GenAIClient(object):
             model_name = run_async(self._get_model_name(), timeout=10)
         self._model_name = model_name
 
-        if "api_key" not in kwargs:
+        if not kwargs.get("api_key"):
             kwargs["api_key"] = "null"
+        logging.info(f"GenAIClient api_key: {'***' + kwargs['api_key'][-4:] if kwargs.get('api_key') and kwargs['api_key'] != 'null' else kwargs.get('api_key')}")
         self._client = AsyncOpenAI(base_url=base_url, **kwargs)
 
         self._semaphore = asyncio.Semaphore(self._max_concurrency)

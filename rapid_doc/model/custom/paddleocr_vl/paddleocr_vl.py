@@ -39,6 +39,7 @@ class VLModelPool:
                             "VL backend server url is required."
                         )
                     api_key = os.getenv('PADDLEOCRVL_API_KEY')
+                    logger.info(f"PADDLEOCRVL_API_KEY loaded: {'***' + api_key[-4:] if api_key else 'None'}")
                     client_kwargs = {"api_key": api_key} if api_key else None
                     genai_config = GenAIConfig(
                         backend=backend,
