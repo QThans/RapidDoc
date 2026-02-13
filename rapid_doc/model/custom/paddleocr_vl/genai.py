@@ -29,6 +29,15 @@ SERVER_BACKENDS = [
     "mlx-vlm-server",
 ]
 
+def _normalize_api_key(api_key: Optional[str]) -> Optional[str]:
+    if not api_key:
+        return None
+    key = api_key.strip()
+    for prefix in ("Bearer ", "bearer ", "Token ", "token "):
+        if key.startswith(prefix):
+            return key[len(prefix):].strip() or None
+    return key
+
 class GenAIConfig(BaseModel):
     backend: Literal[
         "native", "fastdeploy-server", "vllm-server", "sglang-server", "mlx-vlm-server"
@@ -489,9 +498,19 @@ class GenAIClient(object):
             model_name = run_async(self._get_model_name(), timeout=10)
         self._model_name = model_name
 
-        if not kwargs.get("api_key"):
-            kwargs["api_key"] = "null"
-        logging.info(f"GenAIClient api_key: {'***' + kwargs['api_key'][-4:] if kwargs.get('api_key') and kwargs['api_key'] != 'null' else kwargs.get('api_key')}")
+        raw_api_key = kwargs.get("api_key")
+        normalized_api_key = _normalize_api_key(raw_api_key)
+        if raw_api_key and normalized_api_key != raw_api_key:
+            logging.warning(
+                "GenAIClient api_key includes an auth scheme; stripping prefix for OpenAI client."
+            )
+        if not normalized_api_key:
+            normalized_api_key = "null"
+        kwargs["api_key"] = normalized_api_key
+        logging.info(
+            "GenAIClient api_key: "
+            f"{'***' + normalized_api_key[-4:] if normalized_api_key != 'null' else normalized_api_key}"
+        )
         self._client = AsyncOpenAI(base_url=base_url, **kwargs)
 
         self._semaphore = asyncio.Semaphore(self._max_concurrency)

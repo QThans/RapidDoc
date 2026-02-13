@@ -13,6 +13,14 @@ from rapid_doc.model.custom.paddleocr_vl.genai import GenAIConfig
 from rapid_doc.model.custom.paddleocr_vl.predictor import DocVLMPredictor
 from rapid_doc.model.custom.paddleocr_vl.uilts import convert_otsl_to_html, crop_margin, tokenize_figure_of_table
 
+def _normalize_env_value(value: str | None) -> str | None:
+    if not value:
+        return None
+    normalized = value.strip()
+    if len(normalized) >= 2 and normalized[0] == normalized[-1] and normalized[0] in ("'", '"'):
+        normalized = normalized[1:-1].strip()
+    return normalized or None
+
 class VLModelPool:
     _vl_model = None
     _lock = threading.Lock()
@@ -23,9 +31,15 @@ class VLModelPool:
         if cls._vl_model is None:
             with cls._lock:
                 if cls._vl_model is None:
-                    backend = os.getenv('PADDLEOCRVL_VL_REC_BACKEND', 'vllm-server')
-                    server_url = os.getenv('PADDLEOCRVL_VL_VL_REC_SERVER_URL')
-                    paddleocrvl_version = os.getenv('PADDLEOCRVL_VERSION')
+                    backend = _normalize_env_value(
+                        os.getenv('PADDLEOCRVL_VL_REC_BACKEND', 'vllm-server')
+                    )
+                    server_url = _normalize_env_value(
+                        os.getenv('PADDLEOCRVL_VL_VL_REC_SERVER_URL')
+                    )
+                    paddleocrvl_version = _normalize_env_value(
+                        os.getenv('PADDLEOCRVL_VERSION')
+                    )
                     # 环境变量校验
                     if not paddleocrvl_version:
                         raise RuntimeError(
@@ -38,8 +52,12 @@ class VLModelPool:
                             "PADDLEOCRVL_VL_VL_REC_SERVER_URL not set — "
                             "VL backend server url is required."
                         )
-                    api_key = os.getenv('PADDLEOCRVL_API_KEY')
-                    logger.info(f"PADDLEOCRVL_API_KEY loaded: {'***' + api_key[-4:] if api_key else 'None'}")
+                    api_key = _normalize_env_value(os.getenv('PADDLEOCRVL_API_KEY'))
+                    logger.info(f"PADDLEOCRVL_VL_REC_BACKEND loaded: {backend}")
+                    logger.info(f"PADDLEOCRVL_VL_VL_REC_SERVER_URL loaded: {server_url}")
+                    logger.info(
+                        f"PADDLEOCRVL_API_KEY loaded: {'***' + api_key[-4:] if api_key else 'None'}"
+                    )
                     client_kwargs = {"api_key": api_key} if api_key else None
                     genai_config = GenAIConfig(
                         backend=backend,
