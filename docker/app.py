@@ -27,6 +27,36 @@ from rapid_doc.model.custom.paddleocr_vl.paddleocr_vl import (
 )
 from rapid_doc.version import __version__
 
+def _normalize_env_value(value: str | None) -> str | None:
+    if not value:
+        return None
+    normalized = value.strip()
+    if len(normalized) >= 2 and normalized[0] == normalized[-1] and normalized[0] in ("'", '"'):
+        normalized = normalized[1:-1].strip()
+    return normalized or None
+
+def _log_runtime_sources_and_env():
+    try:
+        import rapid_doc as _rapid_doc
+        from rapid_doc.model.custom.paddleocr_vl import paddleocr_vl as _paddleocr_vl
+        logger.info(f"rapid_doc source: {_rapid_doc.__file__}")
+        logger.info(f"paddleocr_vl source: {_paddleocr_vl.__file__}")
+    except Exception as exc:
+        logger.warning(f"failed to log rapid_doc source paths: {exc}")
+
+    backend = _normalize_env_value(os.getenv("PADDLEOCRVL_VL_REC_BACKEND"))
+    server_url = _normalize_env_value(os.getenv("PADDLEOCRVL_VL_VL_REC_SERVER_URL"))
+    api_key = _normalize_env_value(os.getenv("PADDLEOCRVL_API_KEY"))
+    version = _normalize_env_value(os.getenv("PADDLEOCRVL_VERSION"))
+    logger.info(f"PADDLEOCRVL_VL_REC_BACKEND loaded: {backend}")
+    logger.info(f"PADDLEOCRVL_VL_VL_REC_SERVER_URL loaded: {server_url}")
+    logger.info(f"PADDLEOCRVL_VERSION loaded: {version}")
+    logger.info(
+        f"PADDLEOCRVL_API_KEY loaded: {'***' + api_key[-4:] if api_key else 'None'}"
+    )
+
+_log_runtime_sources_and_env()
+
 app = FastAPI(
     title="RapidDoc Web API",
     description="Compatible with RapidDoc official API - Parse documents using RapidDoc",
