@@ -20,20 +20,15 @@ RUN apt-get update && \
 # 设置工作目录
 WORKDIR /app
 
-# 安装 Python 依赖
-RUN python3 -m pip install 'rapid-doc[cpu]==0.7.0' -i https://pypi.org/simple --break-system-packages && \
-    python3 -m pip install 'rapid-doc[api]==0.7.0' -i https://pypi.org/simple --break-system-packages && \
+# 复制源码（使用本地代码）
+COPY . /app
+
+# 安装 Python 依赖（本地源码）
+RUN python3 -m pip install -e ".[cpu,api]" -i https://pypi.org/simple --break-system-packages && \
     python3 -m pip cache purge
 
-# 复制配置文件和脚本（优先复制，利用Docker缓存）
-COPY .env.example /app/
-COPY start_with_env.sh /app/
-
 # 设置启动脚本权限
-RUN chmod +x  start_with_env.sh
-
-# 复制应用代码（最后复制，避免频繁变更影响缓存）
-COPY app.py file_converter.py download_models.py models_download_utils.py /app/
+RUN chmod +x /app/docker/start_with_env.sh
 
 # 设置基础环境变量
 ENV PYTHONPATH=/app
@@ -56,4 +51,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
 
 # 使用支持环境变量的启动脚本（默认）
 # 用户可以通过 docker run 命令覆盖为 ./start_services.sh 使用简单模式
-CMD ["./start_with_env.sh"]
+CMD ["./docker/start_with_env.sh"]
