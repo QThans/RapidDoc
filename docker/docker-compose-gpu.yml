@@ -1,7 +1,9 @@
 services:
   rapid-doc-server:
     container_name: rapid-doc-server
-    image: hzkitty/rapid-doc:0.7.0-gpu
+    build:
+      context: ..
+      dockerfile: docker/DockerfileGPU
     deploy:
       resources:
         reservations:
