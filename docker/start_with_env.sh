@@ -8,7 +8,7 @@ if [ -f "/app/.env" ]; then
 fi
 
 # 设置默认值
-export PYTHONPATH=/app
+export PYTHONPATH=/app:/app/docker
 export API_PORT=${API_PORT:-8888}
 export STARTUP_WAIT_TIME=${STARTUP_WAIT_TIME:-15}
 export LOG_LEVEL=${LOG_LEVEL:-INFO}
@@ -30,4 +30,11 @@ echo "======================================"
 
 # 启动 API 服务
 cd /app
-python3 app.py
+if [ -f "/app/app.py" ]; then
+    python3 /app/app.py
+elif [ -f "/app/docker/app.py" ]; then
+    python3 /app/docker/app.py
+else
+    echo "Error: app.py not found in /app or /app/docker"
+    exit 1
+fi

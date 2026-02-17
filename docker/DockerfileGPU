@@ -30,20 +30,17 @@ WORKDIR /app
 # 复制源码（使用本地代码）
 COPY . /app
 
+# 校验构建上下文，GPU 本地安装要求上下文为仓库根目录
+RUN test -f /app/pyproject.toml || (echo "ERROR: build context must include pyproject.toml (repo root)." && exit 1)
+
 # 安装 Python 依赖（本地源码）
 RUN python3 -m pip install --upgrade pip setuptools wheel && \
     python3 -m pip install -e ".[gpu,api]" -i https://pypi.org/simple --break-system-packages && \
     python3 -m pip cache purge
 
-# 复制配置文件和脚本（优先复制，利用Docker缓存）
-COPY docker/.env.example /app/.env.example
-COPY docker/start_with_env.sh /app/start_with_env.sh
-
-# 设置启动脚本权限
-RUN chmod +x  start_with_env.sh
-
-# 复制应用代码（最后复制，避免频繁变更影响缓存）
-COPY docker/app.py docker/file_converter.py docker/download_models.py docker/models_download_utils.py /app/
+# 复制默认环境变量示例并设置启动脚本权限
+RUN cp /app/docker/.env.example /app/.env.example && \
+    chmod +x /app/docker/start_with_env.sh
 
 # 设置基础环境变量
 ENV PYTHONPATH=/app
@@ -57,7 +54,7 @@ ENV RAPID_MODELS_DIR=/app/models
 # Gotenberg URL (可选，用于 Office/URL 转 PDF，留空则禁用)
 # ENV GOTENBERG_URL=
 # 下载默认模型文件实现离线部署
-RUN python3 download_models.py
+RUN python3 docker/download_models.py
 
 # 暴露端口（默认端口，可通过环境变量在运行时修改）
 EXPOSE 8888 8888
@@ -68,4 +65,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
 
 # 使用支持环境变量的启动脚本（默认）
 # 用户可以通过 docker run 命令覆盖为 ./start_services.sh 使用简单模式
-CMD ["./start_with_env.sh"]
+CMD ["./docker/start_with_env.sh"]
